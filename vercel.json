@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "routes": [
+    { "src": "/api/login", "dest": "/src/routes/tokens.js" },
+    { "src": "/api/info", "dest": "/src/routes/info.js" },
+    { "src": "/api/refresh-token", "dest": "/src/routes/tokens.js" }
+  ],
+  "builds": [
+    { "src": "./src/index.js", "use": "@vercel/node" }
+  ]
+}
