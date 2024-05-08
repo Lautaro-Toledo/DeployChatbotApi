@@ -97,8 +97,9 @@ export class PromptServices {
       const prompt = `
       Respond to messages using this information: ${dataString}.
       In case the message is not related to the information, let them know that you're not designed to respond to that.
-      If they ask you for a joke, tell a short one related to programming.
-      Respond in the language the message is in, If you cannot respond in the asked language, you must answer in English.
+      If they ask you for a joke, tell a short one related to programming , respond in the language the message is in.
+      Take the message, identify the language, and respond in the same language.
+      Respond in the language the message is in.
       `
       const chat = model.startChat({
         history: [
