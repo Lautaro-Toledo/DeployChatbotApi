@@ -133,16 +133,19 @@ export class PromptServices {
       const message = payload.message;
       const parsedMessage = parseMessage(message)
       const redisItem = await redis.getItem(parsedMessage, res)
-      console.log({data: redisItem});
-      if (!redisItem) {
+
+      if (!redisItem){
         const data = await this.getAll();
         const dataPrev = data.map(item => {
           const {_id, ...Data } = item; 
           return Data._doc.Data;
-        })
+        });
         const dataString = JSON.stringify(dataPrev);
         const response = await this.geminiGeneration(message, dataString);
-        await redis.createItem( response,parsedMessage, res)
+        const regexChiste = /\b(chiste|broma|gracia|burla|chistorete|chascarrillo|joda|joke|funny|humor|laugh|jest|wit)\b/i;
+        if (!regexChiste.test(message)) {
+          await redis.createItem( response,parsedMessage, res)
+        };
         return res.json({response});
       }
       else{
