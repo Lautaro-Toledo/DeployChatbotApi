@@ -36,7 +36,7 @@ export class WtsppService {
         if (text !== "") {
           console.log(text);
           console.log(number);
-          await Process(text, number);
+          this.Process(text, number);
         }
       }
       res.send("EVENT_RECEIVED")
