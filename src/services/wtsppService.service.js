@@ -1,5 +1,6 @@
 import https from "https";
 import { MessageText, messageButtons } from "../shared/whatsApp.modes.js";
+import { config } from "../config/index.js";
 
 export class WtsppService {
   VerifyToken = ( req, res) => {
@@ -75,7 +76,7 @@ export class WtsppService {
       body: data,
       headers: {
         "Content-Type": "application/json",
-        Authorization: "Bearer 'token permanente'"
+        Authorization: "Bearer " + config.tokenWtspp
       }
     };
   

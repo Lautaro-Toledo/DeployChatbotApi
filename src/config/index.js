@@ -11,5 +11,6 @@ export const config = {
   redisPassword: process.env.REDIS_PASSWORD,
   redisHost: process.env.REDIS_HOST,
   redisPort: process.env.REDIS_PORT,
+  tokenWtspp: process.env.TOKEN_WTSPP,
 };
 
