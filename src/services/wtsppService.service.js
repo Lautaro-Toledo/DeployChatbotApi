@@ -2,12 +2,13 @@ import https from "https";
 import { MessageText, messageButtons } from "../shared/whatsApp.modes.js";
 import { config } from "../config/index.js";
 import axios from "axios";
+import { PromptServices } from "./prompt.service.js";
 
-export class WtsppService {
+export class WtsppService extends PromptServices{
   VerifyToken = ( req, res) => {
 
     try {
-      const accessToken = "Z9ES8DXF7CG6V5JHBKN";
+      const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoidXNlciIsImlhdCI6MTcxNjQwMzYzNCwiZXhwIjoxNzE2NDQ2ODM0fQ.KIZO2MQjACmubN-8eIsTpttjxD7mKPRVAE0t1MBn3DE";
       const token = req.query["hub.verify_token"];
       const challenge = req.query["hub.challenge"];
   
@@ -37,8 +38,7 @@ export class WtsppService {
         if (text !== "") {
           console.log(text);
           console.log(number);
-          await this.Process(text, number);
-          //542617506693
+          await this.Process(text, 542617506693);
         }
       }
       res.send("EVENT_RECEIVED")
@@ -88,54 +88,62 @@ export class WtsppService {
     }
   }
 
-  Process = async (textUser, number)=> {
+  Process = async ( textUser, number)=> {
     textUser= textUser.toLowerCase();
     let models = [];
   
   
     //#region sin gemini
-    //Hola que tal
-    if (textUser.includes("hola")) {
-      //SALUDAR
-      const model = MessageText("hello, nice to me you", number);
-      models.push(model);
-      const listModel = MessageText("you are welcome", number);
-      models.push(listModel);
-    } else if (textUser.includes("gracias")) {
-      const model = MessageText("you are welcome", number);
-      models.push(model);
-    } else if (textUser.includes("adios")) {
-      const model = MessageText("bye bye", number);
-      models.push(model);
-    } else if (textUser.includes("comprar")) {
-      const model = messageButtons("Que quieres comprar?", number);
-      models.push(model);
-    } else if (textUser.includes("vender")) {
-      const model = MessageText("puedes vender x aca", number);
-      models.push(model);
-    } else {
-      const model =  MessageText("I do not know", number);
-      models.push(model);
-    }
-    // #endregion
-  
-    //#region con gemini
-    // const responseChatGPT = await chatGPTServices.GetMessageChatGPT(textUser)
-    // if (responseChatGPT !== null) {
-    //   const model = MessageText(responseChatGPT, number);
-    //   models.push(model)
+    // //Hola que tal
+    // if (textUser.includes("hola")) {
+    //   //SALUDAR
+    //   const model = MessageText("hello, nice to me you", number);
+    //   models.push(model);
+    //   const listModel = MessageText("you are welcome", number);
+    //   models.push(listModel);
+    // } else if (textUser.includes("gracias")) {
+    //   const model = MessageText("you are welcome", number);
+    //   models.push(model);
+    // } else if (textUser.includes("adios")) {
+    //   const model = MessageText("bye bye", number);
+    //   models.push(model);
+    // } else if (textUser.includes("comprar")) {
+    //   const model = messageButtons("Que quieres comprar?", number);
+    //   models.push(model);
+    // } else if (textUser.includes("vender")) {
+    //   const model = MessageText("puedes vender x aca", number);
+    //   models.push(model);
     // } else {
-    //   const model = wtsppModels.MessageText("Lo siento algo salio mal intesta mas tarde", number);
-    //   models.push(model)
+    //   const model =  MessageText("I do not know", number);
+    //   models.push(model);
     // }
-    
     // #endregion
+  
+    // #region con gemini
+    try { 
+      let data = await this.getAll();
+
+      const dataPrev = data.map(item => {
+        const {_id, ...Data } = item; 
+        return Data._doc.Data;
+      });
+      const dataString = JSON.stringify(dataPrev);
+      const response = await this.geminiGeneration(textUser, dataString, "prueva whatsapp");
+        if (response !== null) {
+          const model = MessageText(response, number);
+          models.push(model)
+        } else {
+          const model = wtsppModels.MessageText("Lo siento algo salio mal intesta mas tarde", number);
+          models.push(model)
+        }
+        models.forEach(model => {
+          this.SendMessageWtspp(model);
+          console.log({model});
+        })
+      } catch (error) {
+        console.error(error);
+      }
+    }
     
-  
-    models.forEach(model => {
-      this.SendMessageWtspp(model);
-      console.log({model});
-    })
   }
-  
-}
+  // #endregion
