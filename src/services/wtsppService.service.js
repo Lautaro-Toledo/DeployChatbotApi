@@ -1,6 +1,7 @@
 import https from "https";
 import { MessageText, messageButtons } from "../shared/whatsApp.modes.js";
 import { config } from "../config/index.js";
+import axios from "axios";
 
 export class WtsppService {
   VerifyToken = ( req, res) => {
@@ -67,31 +68,23 @@ export class WtsppService {
     return text;
   }
 
-  SendMessageWtspp = (data) => {
+  SendMessageWtspp = async (data) => {
 
-    const options = {    
-      host: "graph.facebook.com",
-      path: "v19.0/321829781013280/messages",
-      method: "POST",
-      body: data,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer EAAFOpYet34QBOyrSWjGzYE5kpt234ms9fqr8zlvJxWn9dPcBuQKgpjdzbTRnHMi76DgFCFsNiQSA7kduvaN3gEWHPZBwj80EC5fnZBDnvWua3C1UFD6aG0GfFOjoZAtBIm5TsTF4E6ZBknu9Sh2KuQzDSAjXN9jHbQqCw0SVH6kZBCCMCM1z77JCsOMur1XaCyK8mN8IbnElkf7iGLVIZD"
-      }
-    };
-  
-    const req = https.request(options, res => {
-      res.on("data", d=> {
-        process.stdout.write(d);
-      })
-    });
-  
-    req.on("error", err => {
-      console.error(err);
-    }) 
-  
-    req.write(data);
-    req.end();
+    try {
+      const url = 'https://graph.facebook.com/v19.0/321829781013280/messages';
+      const token = 'EAAFOpYet34QBOyrSWjGzYE5kpt234ms9fqr8zlvJxWn9dPcBuQKgpjdzbTRnHMi76DgFCFsNiQSA7kduvaN3gEWHPZBwj80EC5fnZBDnvWua3C1UFD6aG0GfFOjoZAtBIm5TsTF4E6ZBknu9Sh2KuQzDSAjXN9jHbQqCw0SVH6kZBCCMCM1z77JCsOMur1XaCyK8mN8IbnElkf7iGLVIZD';
+
+      await axios.post(url, data, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      console.log('Mensaje enviado:', data);
+    } catch (error) {
+      console.error('Error al enviar el mensaje:', error.response ? error.response.data : error.message);
+    }
   }
 
   Process = async (textUser, number)=> {
