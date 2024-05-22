@@ -1,5 +1,5 @@
 import https from "https";
-import { MessageText, messageButtons } from "../shared/whatsApp.modes.js";
+import { MessageText, messageButtons, messageList } from "../shared/whatsApp.modes.js";
 import { config } from "../config/index.js";
 import axios from "axios";
 import { PromptServices } from "./prompt.service.js";
@@ -129,7 +129,11 @@ export class WtsppService extends PromptServices{
       });
       const dataString = JSON.stringify(dataPrev);
       const response = await this.geminiGeneration(textUser, dataString, "prueva whatsapp");
-        if (response !== null) {
+        
+      if (textUser === "list") {
+        const model = messageList(number);
+        models.push(model)
+      } else if (response !== null) {
           const model = MessageText(response, number);
           models.push(model)
         } else {
