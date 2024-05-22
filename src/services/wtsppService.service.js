@@ -1,5 +1,6 @@
 import https from "https";
 import { MessageText, messageButtons } from "../shared/whatsApp.modes.js";
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { config } from "../config/index.js";
 import axios from "axios";
 
@@ -37,7 +38,9 @@ export class WtsppService {
         if (text !== "") {
           console.log(text);
           console.log(number);
-          await this.Process(text, 542617506693);
+          const numero = this.formatPhoneNumber(number, "AR");
+          // 542617506693
+          await this.Process(text, numero);
         }
       }
       res.send("EVENT_RECEIVED")
@@ -67,6 +70,14 @@ export class WtsppService {
     }
     return text;
   }
+
+  formatPhoneNumber = (phoneNumber, country) => {
+    const phoneNumberParsed = parsePhoneNumberFromString(phoneNumber, country);
+    if (phoneNumberParsed && phoneNumberParsed.isValid()) {
+      return phoneNumberParsed.format('E.164'); // Formato internacional
+    }
+    throw new Error('Número de teléfono no válido');
+  };
 
   SendMessageWtspp = async (data) => {
 
