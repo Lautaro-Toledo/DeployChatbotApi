@@ -1,13 +1,14 @@
 import Boom  from "@hapi/boom";
-import { promptModel } from "../models/prompt.model.js";
+import { promptModel, promptPrivateModel } from "../models/prompt.model.js";
 import { config } from "../config/index.js";
 import { HfInference } from "@huggingface/inference";
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import jwt from "jsonwebtoken"
 import * as crypto from 'node:crypto'
 import { RedisServices } from "./redis.service.js";
+import { userModel } from "../models/user.model.js";
+import { compare } from "bcrypt";
 const redis = new RedisServices()
-
 
 const parseMessage = (message) => {
   // Expresiones Regulares para cada posible caso de vocales con caracteres especiales
@@ -23,9 +24,9 @@ const parseMessage = (message) => {
   .replaceAll(vowelCaseI, 'i')
   .replaceAll(vowelCaseO, 'o')
   .replaceAll(vowelCaseU, 'u')
-  .replaceAll(vowelCaseE, 'e');
-
-  return cleanedMessage
+  .replaceAll(vowelCaseE, 'e')
+  const dontRepeatMsg = cleanedMessage.split("tomaestapregunta,reformulala,luegodevuelvelarespuestasindevolverlareformulaciondelarespuesta,solomeinteresalarespuestaensi:")
+  return dontRepeatMsg[dontRepeatMsg.length - 1]
 }
 
 
@@ -38,6 +39,19 @@ export class PromptServices {
       throw new Boom.badRequest(error);
     }
   };
+
+  async getAllPrivate() {
+    try {
+      const dataPublic = await promptModel.find();
+      const dataPrivate = await promptPrivateModel.find();
+      const data = [...dataPublic, ...dataPrivate];
+      return data;
+    } catch (error) {
+      throw new Boom.badRequest(error);
+    }
+  };
+
+  
 
   async dataComparison(message, dataString) {
     const hf = new HfInference(config.iaKey);
@@ -90,28 +104,30 @@ export class PromptServices {
   }
 
 
-  async geminiGeneration(message, dataString) {
+  async geminiGeneration(message, dataString, history, count = 0) {
     try {
       const genAI = new GoogleGenerativeAI(config.iaKey)
       const model = genAI.getGenerativeModel({ model: "gemini-pro" })
       const prompt = `
-      Respond to messages using this information: ${dataString}.
+      Answer the message using this information: ${dataString} (This is Not a History).
+      Take the message, identify the language, and respond in the same language.
+      You must always answer in the language the messages are in, otherwise you will recieve a punishment.
       In case the message is not related to the information, let them know that you're not designed to respond to that.
       If they ask you for a joke, tell a short one related to programming , respond in the language the message is in.
-      Take the message, identify the language, and respond in the same language.
-      Respond in the language the message is in.
-      `
+      `;
+      const prompt2 = `
+      Debes usar el siguiente historial: ${history} para verificar si el mensaje tiene alguna relación con los elementos del historial, una vez completado, retorna tu respuesta`;
       const chat = model.startChat({
         history: [
           {
             role: "user",
-            parts: [{ text: `${prompt}` }
-            ]
-          }, {
+            parts: [{ text: prompt }, {text: prompt2}]
+          },
+          {
             role: "model",
             parts: [{text: "Nice to meet you, I'm Kike. How can I help you?"}]
-          }
-        ], 
+          },        
+        ],
         context:"sos un agente IA de nogadev, te llamas Kike, estas para ayudar a los usuarios de su pagina",
         generationConfig:{
           maxOutputTokens: 100,
@@ -120,7 +136,11 @@ export class PromptServices {
       const result = await chat.sendMessage(message)
       const response = result.response
       const text = response.text()
-      return text
+      if ((text === '' && count <= 3)) {
+        return await this.geminiGeneration(message , dataString, count++);
+      }else{
+        return text
+      }
     } catch (e) {
       console.log({e});
       console.log(e.errorDetails[0].fieldViolations[0].description);
@@ -128,30 +148,32 @@ export class PromptServices {
     }
   }
 
-  async postResponse(res, payload){
+  async postResponse(res, req, accessible){
     try {
-      const message = payload.message;
-      const parsedMessage = parseMessage(message)
-      const redisItem = await redis.getItem(parsedMessage, res)
+      const {headers,body} = req
+      const token = headers.authorization
+      const message = body.message;
+      const parsedToken = token.split('Bearer ')[1]
+      const redisItemToken = await redis.getItem(parsedToken)      
+      let data = await this.getAll();
 
-      if (!redisItem){
-        const data = await this.getAll();
-        const dataPrev = data.map(item => {
-          const {_id, ...Data } = item; 
-          return Data._doc.Data;
-        });
-        const dataString = JSON.stringify(dataPrev);
-        const response = await this.geminiGeneration(message, dataString);
-        const regexChiste = /\b(chiste|broma|gracia|burla|chistorete|chascarrillo|joda|joke|funny|humor|laugh|jest|wit)\b/i;
-        if (!regexChiste.test(message)) {
-          await redis.createItem( response,parsedMessage, res)
-        };
+      if (accessible === "private") {
+        data = await this.getAllPrivate();
+      }
+
+      const dataPrev = data.map(item => {
+        const {_id, ...Data } = item; 
+        return Data._doc.Data;
+      });
+      const dataString = JSON.stringify(dataPrev);
+      const response = await this.geminiGeneration(message, dataString, redisItemToken);
+      if (!redisItemToken) {
+        await redis.createItem(`  Message: ${message}, Response: ${response}`, parsedToken)
+      }else{
+        await redis.updateItem(parsedToken,`  Message: ${message}, Response: ${response}`)
+      }
         return res.json({response});
-      }
-      else{
-        return res.json({response: redisItem})
-      }
-    } catch (error) {
+      } catch (error) {
       return res.status(400).json({error: error.message})
     }
   }
@@ -160,29 +182,59 @@ export class PromptServices {
   // Generar token
   async generarToken(req, res) {
     try {
-      const { jwtSecret } = req.body;
+      const { jwtSecret, password, email } = req.body;
       const decoded = crypto.createHash('sha256').update(config.jwtSecret).digest('hex');
-
+      
       if (decoded !== jwtSecret ) {
         return res.status(401).json({ mensaje: 'Clave secreta incorrecta' });
       }
-      const token = jwt.sign({}, config.jwtSecret, { expiresIn: '15m' });
-      const refreshToken = jwt.sign({}, config.jwtSecret, { expiresIn: '12h' });
+      
+      if (password || email) {
+        const findUser = await userModel.findOne({ email });
+        if (!findUser){
+          return res.status(404).json({ mensaje: 'USER_NOT_FOUND' });
+        }
+        
+        const matchPassword = await compare(password, findUser.password);
+        
+        if (!matchPassword){
+          return res.status(403).json({ mensaje: 'PASSWORD_INCORRECT' });
+        }
+        
+        const token = jwt.sign({ id: findUser._id, role: findUser.role}, config.jwtSecret, { expiresIn: '15m' });
+        const refreshToken = jwt.sign({role: findUser.role}, config.jwtSecret, { expiresIn: '12h' });
+        
+        const data = {
+          user: {
+            email: findUser.email,
+            role: findUser.role,
+          },
+          token,
+          refreshToken
+        };
+    
+        return res.json({data});
+      }
+
+      const token = jwt.sign({role: "user"}, config.jwtSecret, { expiresIn: '15m' });
+      const refreshToken = jwt.sign({role: "user"}, config.jwtSecret, { expiresIn: '12h' });
+
       return res.json({ token, refreshToken });
     } catch (error) {
-      return res.status(500).json({ mensaje: 'Error al generar el token' });
+      return res.status(500).json({ mensaje: 'Error al generar el token' + error });
     }
   }
 
   async refreshToken(req, res) {
     try {
       const { token } = req.body;
-      jwt.verify(token, config.jwtSecret);
       if (!token) {
         return res.status(401).json({message: 'Token not provided.'})
-      } 
-        const refreshedToken = jwt.sign({}, config.jwtSecret, { expiresIn: '15m' });
-        return res.json({ refreshedToken });
+      }
+      const verifyToken = jwt.verify(token, config.jwtSecret);
+
+      const refreshedToken = jwt.sign({role: verifyToken.role}, config.jwtSecret, { expiresIn: '15m' });
+      return res.json({ refreshedToken });
     } catch (error) {
       return res.status(401).json({message: 'Invalid Token'})
     }

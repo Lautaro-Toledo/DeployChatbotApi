@@ -3,19 +3,23 @@ import { config } from "../config/index.js";
 const client = createClient({
     password: config.redisPassword,
     socket: {
-        host: 'redis-18030.c1.asia-northeast1-1.gce.redns.redis-cloud.com',
-        port: 18030
+        host: config.redisHost,
+        port: config.redisPort
     }
 });
-await client.connect()
+const redisClient = await client.connect()
 
 export class RedisServices {
-async createItem(value,key, res){
-    const response = await client.set(key, value, {EX: 86400})
+async createItem(value,key){
+    const response = await client.set(key, value, {EX: 300})
     return response
 }
-async getItem(id, res){
-    const response = await client.get(id)
+async updateItem(key, value){
+    const response = await client.APPEND(key, value)
+    return response
+}
+async getItem(key){
+    const response = await client.get(key)
     return response
 }
 }
