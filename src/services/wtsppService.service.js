@@ -71,8 +71,8 @@ export class WtsppService {
   SendMessageWtspp = async (data) => {
 
     try {
-      const url = 'https://graph.facebook.com/v19.0/321829781013280/messages';
-      const token = 'EAAFOpYet34QBOyrSWjGzYE5kpt234ms9fqr8zlvJxWn9dPcBuQKgpjdzbTRnHMi76DgFCFsNiQSA7kduvaN3gEWHPZBwj80EC5fnZBDnvWua3C1UFD6aG0GfFOjoZAtBIm5TsTF4E6ZBknu9Sh2KuQzDSAjXN9jHbQqCw0SVH6kZBCCMCM1z77JCsOMur1XaCyK8mN8IbnElkf7iGLVIZD';
+      const url = 'https://graph.facebook.com/v19.0/321829781013280/messages  ';
+      const token = 'EAAFOpYet34QBO1OVs8egxZAeMcxE6tcwv0Ut5AnZAJbBKjYy3tRKY2LQXt3hZAqAHzrlBjnKubeOAe9ODx8Y580nYNqffxiRihXl6T66ZBI9zEujpPI6MjZA8Iv7DjA1wYSDzGkoZB9zqjCXShJOa34JgMYp25ZCfZBQRif7r14hd6eHgyEQ89wG2EdSOmR3QrRLqpsyvByLpBpLqUzlIR0ZD';
 
       await axios.post(url, data, {
         headers: {
