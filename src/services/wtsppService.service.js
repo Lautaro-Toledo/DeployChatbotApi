@@ -1,4 +1,5 @@
 import https from "https";
+import { Process } from "../shared/processMessage";
 
 export class WtsppService {
   VerifyToken = ( req, res) => {
@@ -34,7 +35,7 @@ export class WtsppService {
         if (text !== "") {
           console.log(text);
           console.log(number);
-          await processMessage.Process(text, number)
+          await Process(text, number)
         }
       }
       res.send("EVENT_RECEIVED")
