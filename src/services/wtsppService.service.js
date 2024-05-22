@@ -36,7 +36,7 @@ export class WtsppService {
         if (text !== "") {
           console.log(text);
           console.log(number);
-          this.Process(text, number);
+          await this.Process(text, number);
         }
       }
       res.send("EVENT_RECEIVED")
@@ -76,7 +76,7 @@ export class WtsppService {
       body: data,
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer EAAFOpYet34QBOyrSWjGzYE5kpt234ms9fqr8zlvJxWn9dPcBuQKgpjdzbTRnHMi76DgFCFsNiQSA7kduvaN3gEWHPZBwj80EC5fnZBDnvWua3C1UFD6aG0GfFOjoZAtBIm5TsTF4E6ZBknu9Sh2KuQzDSAjXN9jHbQqCw0SVH6kZBCCMCM1z77JCsOMur1XaCyK8mN8IbnElkf7iGLVIZD"
+        Authorization: "Bearer EAAFOpYet34QBOyrSWjGzYE5kpt234ms9fqr8zlvJxWn9dPcBuQKgpjdzbTRnHMi76DgFCFsNiQSA7kduvaN3gEWHPZBwj80EC5fnZBDnvWua3C1UFD6aG0GfFOjoZAtBIm5TsTF4E6ZBknu9Sh2KuQzDSAjXN9jHbQqCw0SVH6kZBCCMCM1z77JCsOMur1XaCyK8mN8IbnElkf7iGLVIZD"
       }
     };
   
