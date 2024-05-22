@@ -133,6 +133,7 @@ export class WtsppService {
   
     models.forEach(model => {
       this.SendMessageWtspp(model);
+      console.log({model});
     })
   }
   
