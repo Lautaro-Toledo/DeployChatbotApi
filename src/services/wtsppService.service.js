@@ -72,8 +72,8 @@ export class WtsppService extends PromptServices{
   SendMessageWtspp = async (data) => {
 
     try {
-      const url = 'https://graph.facebook.com/v19.0/321829781013280/messages  ';
-      const token = 'EAAFOpYet34QBO1OVs8egxZAeMcxE6tcwv0Ut5AnZAJbBKjYy3tRKY2LQXt3hZAqAHzrlBjnKubeOAe9ODx8Y580nYNqffxiRihXl6T66ZBI9zEujpPI6MjZA8Iv7DjA1wYSDzGkoZB9zqjCXShJOa34JgMYp25ZCfZBQRif7r14hd6eHgyEQ89wG2EdSOmR3QrRLqpsyvByLpBpLqUzlIR0ZD';
+      const url = 'https://graph.facebook.com/v19.0/321829781013280/messages';
+      const token = config.tokenWtspp;
 
       await axios.post(url, data, {
         headers: {
@@ -129,11 +129,7 @@ export class WtsppService extends PromptServices{
       });
       const dataString = JSON.stringify(dataPrev);
       const response = await this.geminiGeneration(textUser, dataString, "prueva whatsapp");
-        
-      if (textUser === "list") {
-        const model = messageList(number);
-        models.push(model)
-      } else if (response !== null) {
+        if (response !== null) {
           const model = MessageText(response, number);
           models.push(model)
         } else {
