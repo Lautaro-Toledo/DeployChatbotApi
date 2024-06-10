@@ -13,6 +13,5 @@ export const config = {
   tokenWtspp: process.env.TOKEN_WTSPP,
   redisPort: process.env.REDIS_PORT,
   pineconeToken: process.env.PINECONE_DB_TOKEN,
-  openaiKey: process.env.OPENAI_API_KEY,
 };
 

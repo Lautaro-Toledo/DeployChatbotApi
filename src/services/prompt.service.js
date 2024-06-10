@@ -10,16 +10,9 @@ import { RedisServices } from "./redis.service.js";
 import { userModel } from "../models/user.model.js";
 import { compare } from "bcrypt";
 import { HistoryServices } from './history.service.js';
-// import { OpenAILangChainService } from "./langchain.service.js";
-// import { VertexLangChainService } from "./geminiLangChain.service.js";
 // import { pineconeDB } from "../db/pineconedb.js";
 const redis = new RedisServices()
 const history = new HistoryServices()
-// const openAI = new OpenAILangChainService()
-// const vertex = new VertexLangChainService()
-
-
-
 const parseMessage = (message) => {
   // Expresiones Regulares para cada posible caso de vocales con caracteres especiales
   const vowelCaseA = /[áÁàâÀÂäÄãÃ]/g;
@@ -114,10 +107,10 @@ export class PromptServices {
   }
 
 
-  async geminiGeneration(message, dataString, history, language, count = 0) {
+  async geminiGeneration(message, dataString, history, language,count = 0) {
     try {
       const genAI = new GoogleGenerativeAI(config.iaKey)
-      const model = genAI.getGenerativeModel({ model: "gemini-pro" })
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" }) 
       //#region English prompt
       // Answer the message using this information: ${dataString} (This is Not a History).
       // Take the message, identify the language, and respond in the same language.
@@ -137,7 +130,7 @@ export class PromptServices {
         history: [
           {
             role: "user",
-            parts: [{ text: prompt3 }, { text: prompt }, { text: prompt2 }, { text: prompt3 }]
+            parts: [{text: prompt3},{ text: prompt }, { text: prompt2 },{text: prompt3} ]
           },
           {
             role: "model",
@@ -149,7 +142,7 @@ export class PromptServices {
           maxOutputTokens: 100,
         }
       })
-      console.log({ prompt3 });
+      console.log({prompt3});
       const result = await chat.sendMessage(message)
       const response = result.response
       const text = response.text()
@@ -165,17 +158,6 @@ export class PromptServices {
     }
   }
 
-  // async langChaingGenerate(message, parsedToken, context) {
-  //   try {
-  //     const response = openAI.generateMessage(message, parsedToken, context);
-  //     return response
-  //   } catch (error) {
-  //     console.log('Hubo un error al implementar langcvhain =>', error);
-  //     throw new Error(error);
-  //   }
-
-  // }
-
   async postResponse(res, req, accessible) {
     try {
       //#region Intento de Embed con geminiPro
@@ -186,11 +168,10 @@ export class PromptServices {
       // const embededResponse = await model.embedContent(response, "retrieval_query")
       // console.log({embededResponse});
       //#endregion
-      const { headers, body } = req 
+      const { headers, body } = req
       const token = headers.authorization
       const message = body.message;
       const lang = body.language;
-      const IA = body.model;
       const parsedToken = token.split('Bearer ')[1]
       const redisItemToken = await redis.getItem(parsedToken)
       let data = await this.getAll();
@@ -205,36 +186,19 @@ export class PromptServices {
         return Data._doc.Data;
       });
       const dataString = JSON.stringify(dataPrev);
-
-      let response;
-      if (IA === "Gemini") {
-        response = await this.geminiGeneration(message, dataString, redisItemToken, lang);
-        console.log(IA);
-      // } else if(IA === "ChatGPT") {
-      //   response = await this.langChaingGenerate(message,
-      //         parsedToken,
-      //     {
-      //       dataString,
-      //       language: lang
-      //     });
-      //   console.log(IA);
-      } else {
-        response = await this.geminiGeneration(message, dataString, redisItemToken, lang);
-      }
-
-
+      const response = await this.geminiGeneration(message, dataString, redisItemToken, lang);
       const isMemoryFull = await redis.isMemoryFull(parsedToken)
       if (isMemoryFull) {
         redis.deleteItem(parsedToken)
       }
-
+      
       if (!redisItemToken) {
         /* await pineconeIndex.namespace('history').upsert([{ id: parsedToken, values: [embededMessage, embededResponse], metadata: { message: message, response: response } }])
-         */
-        await history.createHistory(parsedToken, message, response)
-        await redis.createItem(parsedToken, `  Message: ${message}, Response: ${response}`)
+         */        
+        await history.createHistory(parsedToken,message,response)
+        await redis.createItem(parsedToken ,`  Message: ${message}, Response: ${response}`)
       } else {
-        await history.updateHistory(parsedToken, message, response)
+        await history.updateHistory(parsedToken,message,response)
         await redis.updateItem(parsedToken, `  Message: ${message}, Response: ${response}`)
       }
 

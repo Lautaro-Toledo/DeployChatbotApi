@@ -17,15 +17,6 @@ infoRouter.post('/info', async (req, res) => {
   }
 })
 
-// infoRouter.post('/info/OpenIA', async (req, res) => {
-//   try {
-//     const created = await service.postResponse(res, req, "public")
-//     return created
-//   } catch (error) {
-//     console.log(error);
-//   }
-// })
-
 
 infoRouter.get('/info', async (req, res) => {
   try {
