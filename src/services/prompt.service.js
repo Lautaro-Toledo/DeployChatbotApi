@@ -10,13 +10,13 @@ import { RedisServices } from "./redis.service.js";
 import { userModel } from "../models/user.model.js";
 import { compare } from "bcrypt";
 import { HistoryServices } from './history.service.js';
-import { OpenAILangChainService } from "./langchain.service.js";
-import { VertexLangChainService } from "./geminiLangChain.service.js";
+// import { OpenAILangChainService } from "./langchain.service.js";
+// import { VertexLangChainService } from "./geminiLangChain.service.js";
 // import { pineconeDB } from "../db/pineconedb.js";
 const redis = new RedisServices()
 const history = new HistoryServices()
-const openAI = new OpenAILangChainService()
-const vertex = new VertexLangChainService()
+// const openAI = new OpenAILangChainService()
+// const vertex = new VertexLangChainService()
 
 
 
