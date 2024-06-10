@@ -165,16 +165,17 @@ export class PromptServices {
     }
   }
 
-  async langChaingGenerate(message, parsedToken, context) {
-    try {
-      const response = openAI.generateMessage(message, parsedToken, context);
-      return response
-    } catch (error) {
-      console.log('Hubo un error al implementar langcvhain =>', error);
-      throw new Error(error);
-    }
+  // async langChaingGenerate(message, parsedToken, context) {
+  //   try {
+  //     const response = openAI.generateMessage(message, parsedToken, context);
+  //     return response
+  //   } catch (error) {
+  //     console.log('Hubo un error al implementar langcvhain =>', error);
+  //     throw new Error(error);
+  //   }
 
-  }
+  // }
+
   async postResponse(res, req, accessible) {
     try {
       //#region Intento de Embed con geminiPro
@@ -209,14 +210,14 @@ export class PromptServices {
       if (IA === "Gemini") {
         response = await this.geminiGeneration(message, dataString, redisItemToken, lang);
         console.log(IA);
-      } else if(IA === "ChatGPT") {
-        response = await this.langChaingGenerate(message,
-              parsedToken,
-          {
-            dataString,
-            language: lang
-          });
-        console.log(IA);
+      // } else if(IA === "ChatGPT") {
+      //   response = await this.langChaingGenerate(message,
+      //         parsedToken,
+      //     {
+      //       dataString,
+      //       language: lang
+      //     });
+      //   console.log(IA);
       } else {
         response = await this.geminiGeneration(message, dataString, redisItemToken, lang);
       }
